@@ -1,6 +1,7 @@
 ## Peer Assignment 1 - Reproducible Research
 
-```{r}
+
+```r
 echo=TRUE #makes the code visible 
 ```
 
@@ -10,7 +11,8 @@ setwd("~/Desktop/Reproducible Research/Assignment 1")
 
 The following code will check if the data file is already present and if not, will download and unzip the file.
 
-```{r}
+
+```r
 if (!file.exists("activity.zip")){
     download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",
                   "activity.zip",method="curl")
@@ -25,14 +27,27 @@ if (!file.exists("activity.csv")){
 
 Load the data and store them in a dataframe called activity.
 
-```{r}
+
+```r
 activity <- read.csv("activity.csv",stringsAsFactors=FALSE)
 ```
 
 Let's look at the summary of the dataset
 
-```{r}
+
+```r
 summary(activity)
+```
+
+```
+##      steps            date              interval     
+##  Min.   :  0.00   Length:17568       Min.   :   0.0  
+##  1st Qu.:  0.00   Class :character   1st Qu.: 588.8  
+##  Median :  0.00   Mode  :character   Median :1177.5  
+##  Mean   : 37.38                      Mean   :1177.5  
+##  3rd Qu.: 12.00                      3rd Qu.:1766.2  
+##  Max.   :806.00                      Max.   :2355.0  
+##  NA's   :2304
 ```
 
 The variables included in this dataset are:  
@@ -46,14 +61,26 @@ The variables included in this dataset are:
 As we saw from the the structure, there are missing values that have to be omitted to complete this step (as requested).
 For this purpose, a new dataset will be created.
 
-```{r}
+
+```r
 activity_complete <- na.omit(activity)
 ```
 
 Let's look at the summary of the new dataset.
 
-```{r}
+
+```r
 summary(activity_complete)
+```
+
+```
+##      steps            date              interval     
+##  Min.   :  0.00   Length:15264       Min.   :   0.0  
+##  1st Qu.:  0.00   Class :character   1st Qu.: 588.8  
+##  Median :  0.00   Mode  :character   Median :1177.5  
+##  Mean   : 37.38                      Mean   :1177.5  
+##  3rd Qu.: 12.00                      3rd Qu.:1766.2  
+##  Max.   :806.00                      Max.   :2355.0
 ```
 There are no missing values.  
   
@@ -62,7 +89,8 @@ There are no missing values.
 
 To calculate the total number of steps taken per day we need to aggregate the data.
 
-```{r}
+
+```r
 stepsPerDay <- aggregate(steps ~ date,data=activity,FUN=sum)
 ```
 
@@ -81,17 +109,31 @@ Like a bar chart, a histogram is made up of columns plotted on a graph. Usually,
 
 Let's create the histogram.  
 
-```{r}
+
+```r
 hist(stepsPerDay$steps,col="red",xlab="Steps per Day", 
      main="Histogram of Total Number of Steps Taken Each Day")
 ```
 
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
+
 #### 3. Calculate and report the mean and median of the total number of steps taken per day
 
-```{r}
-mean(stepsPerDay$steps)
 
+```r
+mean(stepsPerDay$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(stepsPerDay$steps)
+```
+
+```
+## [1] 10765
 ```
 
 The mean and median of the total number of steps taken each day are very close.  
@@ -107,7 +149,8 @@ The interval varibale represents the numeric version of the hour, to create the 
 - Convert the string into time.  
 - Format the time using only the hour.  
 
-```{r}
+
+```r
 stepsPerInterval <- aggregate(steps ~ interval,data=activity_complete,FUN=mean)
 stepsPerInterval$time <- formatC(stepsPerInterval$interval,width=4,flag=0)
 stepsPerInterval$time <- strptime(stepsPerInterval$time,"%H%M")
@@ -116,17 +159,32 @@ stepsPerInterval$time <- format(stepsPerInterval$time, format="%H:%M")
 
 Let's create the plot. In order to have only the hours appear on the x-axis we need to intervene on the scale breaking it by hours and labeling consequently (the 24*12 is due to the fact that the interval has 12 values per each hour).
 
-```{r, fig.width = 10, fig.height = 4}
+
+```r
 library(ggplot2)
+```
+
+```
+## Warning: package 'ggplot2' was built under R version 3.1.2
+```
+
+```r
 ggplot(stepsPerInterval,aes(x=interval,y=steps)) + geom_line(aes(group=1)) + 
     scale_x_continuous(breaks=stepsPerInterval$interval[seq(1,24*12,12)], 
                        labels=stepsPerInterval$time[seq(1,24*12,12)]) + ylab("5-Minute Interval Average Steps") + xlab("Time Interval")
 ```
 
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
+
 #### 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r}
+
+```r
 stepsPerInterval[which.max(stepsPerInterval$steps),"time"]
+```
+
+```
+## [1] "08:35"
 ```
 
 ### Imputing missing values
@@ -135,8 +193,13 @@ As we saw before, there are a number of days/intervals where there are missing v
   
 #### 1. Calculate and report the total number of missing values in the dataset  
 
-```{r}
+
+```r
 sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
 ```
 
 #### 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.  
@@ -149,7 +212,8 @@ For each row where there is a missing value, the function will check waht is the
 
 #### 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r}
+
+```r
 activity_full <- activity
 
 for(i in 1:nrow(activity_full)) {
@@ -163,18 +227,33 @@ for(i in 1:nrow(activity_full)) {
 
 #### 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-```{r}
+
+```r
 steps_full <- aggregate(steps ~ date,data=activity_full,FUN=sum)
 
 hist(steps_full$steps,col="red",xlab="Steps per Day", 
      main="Histogram of Total Number of Steps Taken Each Day")
 ```
 
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png) 
+
 The histogram of the dataset with the imputed missing values looks like very similar to the histogram of the dataset that omits the missing values.
 
-```{r}
+
+```r
 mean(steps_full$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(steps_full$steps)
+```
+
+```
+## [1] 10766.19
 ```
 
 The mean is the same and now the median is also equal to the mean.  
@@ -187,7 +266,8 @@ For this part, we will use the dataset with the filled-in missing values.
 
 Let's start converting the date in the appropriate format and creating a new variable withthe corresponding day of the week.
 
-```{r}
+
+```r
 activity_full$date <- strptime(activity_full$date,"%Y-%m-%d")
 
 activity_full$day <- weekdays(activity_full$date)
@@ -195,29 +275,46 @@ activity_full$day <- weekdays(activity_full$date)
 
 Now let's create the variable and the convert it into factor.
 
-```{r}
+
+```r
 activity_full$daytype <- ifelse((activity_full$day=="Saturday") | (activity_full$day=="Sunday"),"weekend", "weekday")
 activity_full$daytype <- as.factor(activity_full$daytype)
-
 ```
 
 #### 2.Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
 Let's use the reshape2 package to create the melted dataset and then reshapes it using the mean function.  
 
-```{r}
-library(reshape2)
 
+```r
+library(reshape2)
+```
+
+```
+## Warning: package 'reshape2' was built under R version 3.1.2
+```
+
+```r
 activity_melt <- melt(activity_full, measure.vars="steps")
 steps_day <- dcast(activity_melt, daytype+interval~variable, mean)
 ```
 
 We can now create the plot. The plot shown in the README was built with the lattice packege. Let's do the same.
 
-```{r}
+
+```r
 library(lattice)
+```
+
+```
+## Warning: package 'lattice' was built under R version 3.1.2
+```
+
+```r
 xyplot(steps ~ interval | daytype, data=steps_day,type="l",layout=c(1,2),xlab="Interval",
        ylab="Number of steps")
 ```
+
+![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png) 
 
 It seems that during the weekend the average number of steps is higher. 
